@@ -5,4 +5,4 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "todo-to-learn-to-play-db"
-database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+database_id = "5441926a-9f3b-4523-a5d9-38cd442039fc"
