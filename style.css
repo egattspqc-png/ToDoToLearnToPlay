@@ -364,14 +364,149 @@ table.item-table tr:last-child td { border-bottom: none; }
   gap: 10px;
 }
 
+.photo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .photo-preview {
-  margin-top: 8px;
-  max-width: 100%;
-  max-height: 160px;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
   border-radius: 10px;
-  display: block;
+  cursor: pointer;
+  border: 1px solid var(--line);
 }
 .photo-preview.hidden { display: none; }
+
+.photo-preview-lg {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: cover;
+}
+
+.hidden-file-input { display: none; }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.lightbox.hidden { display: none; }
+.lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+/* ---------- Preview panel ---------- */
+.view-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--todo-soft);
+  color: var(--todo);
+}
+#view-learn .badge, .badge.badge-learn { background: var(--learn-soft); color: var(--learn); }
+#view-play .badge, .badge.badge-play { background: var(--play-soft); color: var(--play); }
+
+.badge.badge-muted { background: var(--bg); color: var(--muted); }
+.badge.badge-done { background: var(--play-soft); color: var(--play); }
+
+.view-row {
+  margin-bottom: 14px;
+}
+.view-row.hidden { display: none; }
+
+.view-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.view-text {
+  font-size: 14px;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.btn-link {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------- Link field + QR scan button ---------- */
+.link-row {
+  display: flex;
+  gap: 8px;
+}
+.link-row input { flex: 1; }
+
+.btn-icon-only {
+  white-space: nowrap;
+  padding: 11px 14px;
+}
+
+/* ---------- QR scanner overlay ---------- */
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+.qr-overlay.hidden { display: none; }
+
+.qr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  padding-top: calc(16px + env(safe-area-inset-top));
+  color: white;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.qr-header .icon-btn {
+  background: rgba(255,255,255,0.15);
+  color: white;
+}
+
+.qr-video {
+  flex: 1;
+  width: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.qr-hint {
+  text-align: center;
+  color: white;
+  font-size: 13px;
+  padding: 14px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  margin: 0;
+}
 
 .field-checkbox {
   display: flex;
