@@ -183,19 +183,16 @@ body {
   font-size: 14px;
 }
 
-table.item-table {
-  width: 100%;
-  border-collapse: collapse;
+/* ---------- Sortable list header (flex-based) ---------- */
+.list-header {
+  display: flex;
   background: var(--surface);
-  border-radius: var(--radius);
-  overflow: hidden;
+  border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: 0 1px 3px rgba(23,27,35,0.08);
-  font-size: 13px;
+  overflow: hidden;
 }
 
-table.item-table th {
-  text-align: left;
-  padding: 10px 8px;
+.list-header .col {
   font-family: var(--font-display);
   font-size: 11px;
   text-transform: uppercase;
@@ -203,22 +200,68 @@ table.item-table th {
   color: var(--muted);
   cursor: pointer;
   user-select: none;
+  padding: 10px 8px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
-table.item-table th .sort-arrow { font-size: 9px; margin-left: 3px; opacity: 0.6; }
+.sort-arrow { font-size: 9px; margin-left: 3px; opacity: 0.6; }
 
-table.item-table td {
-  padding: 10px 8px;
-  border-bottom: 1px solid var(--line);
-  vertical-align: middle;
-}
-
-table.item-table tr:last-child td { border-bottom: none; }
+.col-title { flex: 1 1 auto; min-width: 0; }
+.col-date { flex: 0 0 84px; }
+.col-done { flex: 0 0 52px; text-align: center; }
 
 .row-title { font-weight: 600; }
 .row-title.done { text-decoration: line-through; color: var(--muted); font-weight: 400; }
+
+.list-rows {
+  border-radius: 0 0 var(--radius) var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(23,27,35,0.08);
+}
+
+/* ---------- Swipeable row ---------- */
+.swipe-row {
+  position: relative;
+  overflow: hidden;
+  background: var(--danger);
+}
+
+.swipe-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+}
+
+.swipe-action-btn {
+  width: 70px;
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.swipe-action-edit { background: var(--todo); }
+#view-learn .swipe-action-edit { background: var(--learn); }
+#view-play .swipe-action-edit { background: var(--play); }
+
+.swipe-action-delete { background: var(--danger); }
+
+.swipe-content {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  position: relative;
+  z-index: 1;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+  touch-action: pan-y;
+  font-size: 13px;
+}
+.list-rows .swipe-row:last-child .swipe-content { border-bottom: none; }
 
 .row-done-check {
   width: 20px;
