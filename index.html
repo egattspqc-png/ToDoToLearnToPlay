@@ -72,66 +72,139 @@
   </button>
 </nav>
 
-<!-- ============ MODAL: NEW / EDIT ITEM ============ -->
+<!-- ============ MODAL: VIEW (Preview) ============ -->
 <div id="modalOverlay" class="modal-overlay hidden">
   <div class="modal">
-    <div class="modal-head">
-      <h2 id="modalTitle">รายการใหม่</h2>
-      <button id="modalClose" class="icon-btn" aria-label="ปิด">×</button>
-    </div>
 
-    <form id="itemForm">
-      <input type="hidden" id="f_id">
-      <input type="hidden" id="f_category">
-
-      <label class="field">
-        <span>ชื่อรายการ</span>
-        <input type="text" id="f_title" required placeholder="เช่น ส่งรายงาน">
-      </label>
-
-      <label class="field">
-        <span>รายละเอียด</span>
-        <textarea id="f_notes" rows="2" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
-      </label>
-
-      <div class="field-row">
-        <label class="field">
-          <span>วันเริ่ม</span>
-          <input type="date" id="f_start">
-        </label>
-        <label class="field">
-          <span>วันกำหนดจบ</span>
-          <input type="date" id="f_due">
-        </label>
+    <!-- ---------- PREVIEW PANEL (read-only) ---------- -->
+    <div id="viewPanel">
+      <div class="modal-head">
+        <h2 id="viewTitle">ชื่อรายการ</h2>
+        <button id="viewClose" class="icon-btn" aria-label="ปิด">×</button>
       </div>
 
-      <label class="field">
-        <span>ลิงก์อ้างอิง</span>
-        <input type="url" id="f_link" placeholder="https://...">
-      </label>
+      <div class="view-badges">
+        <span id="viewCategoryBadge" class="badge">To Do</span>
+        <span id="viewDoneBadge" class="badge badge-muted">ยังไม่เสร็จ</span>
+      </div>
 
-      <label class="field">
-        <span>รูปภาพ</span>
-        <input type="file" id="f_photo" accept="image/*" capture="environment">
-        <img id="f_photo_preview" class="photo-preview hidden" alt="ตัวอย่างรูป">
-      </label>
+      <div id="viewNotesRow" class="view-row hidden">
+        <span class="view-label">รายละเอียด</span>
+        <p id="viewNotes" class="view-text"></p>
+      </div>
 
-      <label class="field-checkbox">
-        <input type="checkbox" id="f_done">
-        <span>ทำเสร็จแล้ว</span>
-      </label>
+      <div class="view-row">
+        <span class="view-label">วันเริ่ม</span>
+        <span id="viewStart" class="view-text">—</span>
+      </div>
+
+      <div class="view-row">
+        <span class="view-label">วันกำหนดจบ</span>
+        <span id="viewDue" class="view-text">—</span>
+      </div>
+
+      <div id="viewLinkRow" class="view-row hidden">
+        <span class="view-label">ลิงก์อ้างอิง</span>
+        <button type="button" id="viewLinkBtn" class="btn btn-link">🔗 เปิดลิงก์</button>
+      </div>
+
+      <div id="viewPhotoRow" class="view-row hidden">
+        <span class="view-label">รูปภาพ</span>
+        <img id="viewPhoto" class="photo-preview photo-preview-lg" alt="แตะเพื่อดูรูปเต็ม">
+      </div>
 
       <div class="modal-actions">
-        <button type="button" id="deleteBtn" class="btn btn-danger hidden">ลบ</button>
+        <button type="button" id="viewDeleteBtn" class="btn btn-danger">ลบ</button>
         <div class="modal-actions-right">
-          <button type="button" id="cancelBtn" class="btn btn-ghost">ยกเลิก</button>
-          <button type="submit" class="btn btn-primary">บันทึก</button>
+          <button type="button" id="viewCloseBtn2" class="btn btn-ghost">ปิด</button>
+          <button type="button" id="viewEditBtn" class="btn btn-primary">แก้ไข</button>
         </div>
       </div>
-    </form>
+    </div>
+
+    <!-- ---------- EDIT PANEL (form) ---------- -->
+    <div id="editPanel" class="hidden">
+      <div class="modal-head">
+        <h2 id="modalTitle">รายการใหม่</h2>
+        <button id="modalClose" class="icon-btn" aria-label="ปิด">×</button>
+      </div>
+
+      <form id="itemForm">
+        <input type="hidden" id="f_id">
+        <input type="hidden" id="f_category">
+
+        <label class="field">
+          <span>ชื่อรายการ</span>
+          <input type="text" id="f_title" required placeholder="เช่น ส่งรายงาน">
+        </label>
+
+        <label class="field">
+          <span>รายละเอียด</span>
+          <textarea id="f_notes" rows="2" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>วันเริ่ม</span>
+            <input type="date" id="f_start">
+          </label>
+          <label class="field">
+            <span>วันกำหนดจบ</span>
+            <input type="date" id="f_due">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>ลิงก์อ้างอิง</span>
+          <div class="link-row">
+            <input type="url" id="f_link" placeholder="https://...">
+            <button type="button" id="qrScanBtn" class="btn btn-ghost btn-icon-only" aria-label="สแกน QR Code">📷 QR</button>
+          </div>
+        </label>
+
+        <label class="field">
+          <span>รูปภาพ</span>
+          <div class="photo-row">
+            <img id="f_photo_preview" class="photo-preview hidden" alt="รูปที่บันทึกไว้ แตะเพื่อดูรูปเต็ม">
+            <button type="button" id="photoPickBtn" class="btn btn-ghost">เพิ่ม/ถ่ายรูปใหม่</button>
+          </div>
+          <input type="file" id="f_photo" accept="image/*" capture="environment" class="hidden-file-input">
+        </label>
+
+        <label class="field-checkbox">
+          <input type="checkbox" id="f_done">
+          <span>ทำเสร็จแล้ว</span>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" id="deleteBtn" class="btn btn-danger hidden">ลบ</button>
+          <div class="modal-actions-right">
+            <button type="button" id="cancelBtn" class="btn btn-ghost">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary">บันทึก</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
+<!-- ============ LIGHTBOX (full-screen photo) ============ -->
+<div id="lightbox" class="lightbox hidden">
+  <img id="lightboxImg" src="" alt="รูปขยาย">
+</div>
+
+<!-- ============ QR SCANNER OVERLAY ============ -->
+<div id="qrOverlay" class="qr-overlay hidden">
+  <div class="qr-header">
+    <span>สแกน QR Code</span>
+    <button id="qrCloseBtn" class="icon-btn" aria-label="ปิด">×</button>
+  </div>
+  <video id="qrVideo" class="qr-video" playsinline autoplay muted></video>
+  <canvas id="qrCanvas" class="hidden-file-input"></canvas>
+  <p id="qrHint" class="qr-hint">เล็งกล้องไปที่ QR Code</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
