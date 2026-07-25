@@ -281,14 +281,79 @@ function toPayload(it) {
 
 // ---------- FAB ----------
 document.getElementById("fabAdd").addEventListener("click", () => {
-  openModal(currentView, null);
+  openModal(currentView, null); // no item -> always opens straight into edit mode
 });
 
 // ---------- Modal ----------
 const modalOverlay = document.getElementById("modalOverlay");
 const itemForm = document.getElementById("itemForm");
+const viewPanel = document.getElementById("viewPanel");
+const editPanel = document.getElementById("editPanel");
 
+let activeItem = null; // the item currently shown/edited in the modal
+
+// Open the modal. If an item is given, opens in read-only Preview mode.
+// If item is null (adding new), opens straight into the Edit form.
 function openModal(category, item) {
+  activeItem = item;
+  if (item) {
+    showViewPanel(category, item);
+  } else {
+    showEditPanel(category, null);
+  }
+  modalOverlay.classList.remove("hidden");
+}
+
+function showViewPanel(category, item) {
+  viewPanel.classList.remove("hidden");
+  editPanel.classList.add("hidden");
+
+  document.getElementById("viewTitle").textContent = item.title;
+
+  const catBadge = document.getElementById("viewCategoryBadge");
+  catBadge.textContent = CATEGORY_LABEL[item.category];
+  catBadge.className = "badge badge-" + item.category;
+
+  const doneBadge = document.getElementById("viewDoneBadge");
+  doneBadge.textContent = item.done ? "เสร็จแล้ว" : "ยังไม่เสร็จ";
+  doneBadge.className = "badge " + (item.done ? "badge-done" : "badge-muted");
+
+  const notesRow = document.getElementById("viewNotesRow");
+  if (item.notes) {
+    document.getElementById("viewNotes").textContent = item.notes;
+    notesRow.classList.remove("hidden");
+  } else {
+    notesRow.classList.add("hidden");
+  }
+
+  document.getElementById("viewStart").textContent = item.start_date || "—";
+  document.getElementById("viewDue").textContent = item.due_date || "—";
+
+  const linkRow = document.getElementById("viewLinkRow");
+  if (item.link) {
+    linkRow.classList.remove("hidden");
+    document.getElementById("viewLinkBtn").onclick = () => window.open(item.link, "_blank");
+  } else {
+    linkRow.classList.add("hidden");
+  }
+
+  const photoRow = document.getElementById("viewPhotoRow");
+  if (item.photo) {
+    photoRow.classList.remove("hidden");
+    const photoEl = document.getElementById("viewPhoto");
+    photoEl.src = item.photo;
+    photoEl.onclick = () => openLightbox(item.photo);
+  } else {
+    photoRow.classList.add("hidden");
+  }
+
+  document.getElementById("viewEditBtn").onclick = () => showEditPanel(category, item);
+}
+
+function showEditPanel(category, item) {
+  editPanel.classList.remove("hidden");
+  viewPanel.classList.add("hidden");
+
   document.getElementById("modalTitle").textContent = item ? "แก้ไขรายการ" : "รายการใหม่";
   document.getElementById("f_id").value = item ? item.id : "";
   document.getElementById("f_category").value = category;
@@ -310,19 +375,104 @@ function openModal(category, item) {
   }
 
   document.getElementById("deleteBtn").classList.toggle("hidden", !item);
-
-  modalOverlay.classList.remove("hidden");
 }
 
 function closeModal() {
   modalOverlay.classList.add("hidden");
+  activeItem = null;
 }
 
+document.getElementById("viewClose").addEventListener("click", closeModal);
+document.getElementById("viewCloseBtn2").addEventListener("click", closeModal);
 document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("cancelBtn").addEventListener("click", closeModal);
 modalOverlay.addEventListener("click", (e) => {
   if (e.target === modalOverlay) closeModal();
 });
+
+document.getElementById("viewDeleteBtn").addEventListener("click", async () => {
+  if (!activeItem) return;
+  if (!confirm("ต้องการลบรายการนี้ใช่ไหม?")) return;
+  await deleteItemApi(activeItem.id);
+  closeModal();
+  await fetchItems();
+  render();
+});
+
+// ---------- Lightbox (full-screen photo viewer) ----------
+const lightbox = document.getElementById("lightbox");
+function openLightbox(src) {
+  document.getElementById("lightboxImg").src = src;
+  lightbox.classList.remove("hidden");
+}
+lightbox.addEventListener("click", () => lightbox.classList.add("hidden"));
+
+// Tapping the small photo thumbnail in the edit form opens the lightbox
+// instead of re-triggering the camera/file picker.
+document.getElementById("f_photo_preview").addEventListener("click", () => {
+  if (currentPhotoDataUrl) openLightbox(currentPhotoDataUrl);
+});
+
+// Only the dedicated button opens the camera / file picker.
+document.getElementById("photoPickBtn").addEventListener("click", () => {
+  document.getElementById("f_photo").click();
+});
+
+// ---------- QR code scanner ----------
+const qrOverlay = document.getElementById("qrOverlay");
+const qrVideo = document.getElementById("qrVideo");
+const qrCanvas = document.getElementById("qrCanvas");
+let qrStream = null;
+let qrScanning = false;
+
+async function startQrScanner() {
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+    });
+  } catch (err) {
+    alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้กล้องในเบราว์เซอร์");
+    return;
+  }
+  qrVideo.srcObject = qrStream;
+  await qrVideo.play();
+  qrOverlay.classList.remove("hidden");
+  qrScanning = true;
+  requestAnimationFrame(scanQrFrame);
+}
+
+function stopQrScanner() {
+  qrScanning = false;
+  qrOverlay.classList.add("hidden");
+  if (qrStream) {
+    qrStream.getTracks().forEach((track) => track.stop());
+    qrStream = null;
+  }
+}
+
+function scanQrFrame() {
+  if (!qrScanning) return;
+
+  if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
+    qrCanvas.width = qrVideo.videoWidth;
+    qrCanvas.height = qrVideo.videoHeight;
+    const ctx = qrCanvas.getContext("2d");
+    ctx.drawImage(qrVideo, 0, 0, qrCanvas.width, qrCanvas.height);
+    const imageData = ctx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+    if (code && code.data) {
+      document.getElementById("f_link").value = code.data;
+      stopQrScanner();
+      return;
+    }
+  }
+
+  requestAnimationFrame(scanQrFrame);
+}
+
+document.getElementById("qrScanBtn").addEventListener("click", startQrScanner);
+document.getElementById("qrCloseBtn").addEventListener("click", stopQrScanner);
 
 // Compress photo to keep D1 rows small
 document.getElementById("f_photo").addEventListener("change", (e) => {
