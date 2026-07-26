@@ -431,78 +431,24 @@ function toPayload(it) {
 
 // ---------- FAB ----------
 document.getElementById("fabAdd").addEventListener("click", () => {
-  openModal(currentView, null); // no item -> always opens straight into edit mode
+  openNewItemForm(currentView);
 });
 
-// ---------- Modal ----------
+// ---------- Modal (Edit form only) ----------
 const modalOverlay = document.getElementById("modalOverlay");
 const itemForm = document.getElementById("itemForm");
-const viewPanel = document.getElementById("viewPanel");
 const editPanel = document.getElementById("editPanel");
 
-let activeItem = null; // the item currently shown/edited in the modal
+let activeItem = null; // the item currently being edited in the modal
 
-// Open the modal. If an item is given, opens in read-only Preview mode.
-// If item is null (adding new), opens straight into the Edit form.
-function openModal(category, item) {
-  activeItem = item;
-  if (item) {
-    showViewPanel(category, item);
-  } else {
-    showEditPanel(category, null);
-  }
+function openNewItemForm(category) {
+  activeItem = null;
+  showEditPanel(category, null);
   modalOverlay.classList.remove("hidden");
-}
-
-function showViewPanel(category, item) {
-  viewPanel.classList.remove("hidden");
-  editPanel.classList.add("hidden");
-
-  document.getElementById("viewTitle").textContent = item.title;
-
-  const catBadge = document.getElementById("viewCategoryBadge");
-  catBadge.textContent = CATEGORY_LABEL[item.category];
-  catBadge.className = "badge badge-" + item.category;
-
-  const doneBadge = document.getElementById("viewDoneBadge");
-  doneBadge.textContent = item.done ? "เสร็จแล้ว" : "ยังไม่เสร็จ";
-  doneBadge.className = "badge " + (item.done ? "badge-done" : "badge-muted");
-
-  const notesRow = document.getElementById("viewNotesRow");
-  if (item.notes) {
-    document.getElementById("viewNotes").textContent = item.notes;
-    notesRow.classList.remove("hidden");
-  } else {
-    notesRow.classList.add("hidden");
-  }
-
-  document.getElementById("viewStart").textContent = item.start_date || "—";
-  document.getElementById("viewDue").textContent = item.due_date || "—";
-
-  const linkRow = document.getElementById("viewLinkRow");
-  if (item.link) {
-    linkRow.classList.remove("hidden");
-    document.getElementById("viewLinkBtn").onclick = () => window.open(item.link, "_blank");
-  } else {
-    linkRow.classList.add("hidden");
-  }
-
-  const photoRow = document.getElementById("viewPhotoRow");
-  if (item.photo) {
-    photoRow.classList.remove("hidden");
-    const photoEl = document.getElementById("viewPhoto");
-    photoEl.src = item.photo;
-    photoEl.onclick = () => openLightbox(item.photo);
-  } else {
-    photoRow.classList.add("hidden");
-  }
-
-  document.getElementById("viewEditBtn").onclick = () => showEditPanel(category, item);
 }
 
 function showEditPanel(category, item) {
   editPanel.classList.remove("hidden");
-  viewPanel.classList.add("hidden");
 
   document.getElementById("modalTitle").textContent = item ? "แก้ไขรายการ" : "รายการใหม่";
   document.getElementById("f_id").value = item ? item.id : "";
@@ -529,7 +475,7 @@ function showEditPanel(category, item) {
 }
 
 // Opens the modal straight into edit mode for an existing item
-// (used by the swipe "แก้ไข" action, skipping the preview step).
+// (used by the swipe "แก้ไข" action).
 function editItemDirectly(category, item) {
   activeItem = item;
   showEditPanel(category, item);
@@ -541,21 +487,10 @@ function closeModal() {
   activeItem = null;
 }
 
-document.getElementById("viewClose").addEventListener("click", closeModal);
-document.getElementById("viewCloseBtn2").addEventListener("click", closeModal);
 document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("cancelBtn").addEventListener("click", closeModal);
 modalOverlay.addEventListener("click", (e) => {
   if (e.target === modalOverlay) closeModal();
-});
-
-document.getElementById("viewDeleteBtn").addEventListener("click", async () => {
-  if (!activeItem) return;
-  if (!confirm("ต้องการลบรายการนี้ใช่ไหม?")) return;
-  await deleteItemApi(activeItem.id);
-  closeModal();
-  await fetchItems();
-  render();
 });
 
 // ---------- Lightbox (full-screen photo viewer) ----------
