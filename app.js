@@ -203,20 +203,21 @@ function renderList(category) {
   }
 
   const arrow = (c) => (col === c ? (dir === "asc" ? "▲" : "▼") : "");
+  const chipClass = (c) => "sort-chip" + (col === c ? " active" : "");
 
   container.innerHTML = `
-    <div class="list-header">
-      <div class="col col-title" data-col="title">ชื่อรายการ <span class="sort-arrow">${arrow("title")}</span></div>
-      <div class="col col-date" data-col="start_date">เริ่ม <span class="sort-arrow">${arrow("start_date")}</span></div>
-      <div class="col col-date" data-col="due_date">กำหนดจบ <span class="sort-arrow">${arrow("due_date")}</span></div>
-      <div class="col col-done" data-col="done">เสร็จ <span class="sort-arrow">${arrow("done")}</span></div>
+    <div class="sort-bar">
+      <button type="button" class="${chipClass("title")}" data-col="title">ชื่อ ${arrow("title")}</button>
+      <button type="button" class="${chipClass("start_date")}" data-col="start_date">เริ่ม ${arrow("start_date")}</button>
+      <button type="button" class="${chipClass("due_date")}" data-col="due_date">กำหนดจบ ${arrow("due_date")}</button>
+      <button type="button" class="${chipClass("done")}" data-col="done">เสร็จ ${arrow("done")}</button>
     </div>
     <div class="list-rows">
       ${list.map(rowHtml).join("")}
     </div>
   `;
 
-  container.querySelectorAll(".list-header [data-col]").forEach((el) => {
+  container.querySelectorAll(".sort-bar [data-col]").forEach((el) => {
     el.addEventListener("click", () => {
       const c = el.dataset.col;
       if (sortState[category].col === c) {
@@ -236,6 +237,22 @@ function renderList(category) {
       it.done = chk.checked ? 1 : 0;
       await updateItem(it.id, toPayload(it));
       renderList(category);
+    });
+  });
+
+  container.querySelectorAll('[data-action="open-link"]').forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const it = items.find((i) => i.id === btn.dataset.id);
+      if (it && it.link) window.open(it.link, "_blank");
+    });
+  });
+
+  container.querySelectorAll(".card-photo-thumb").forEach((img) => {
+    img.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const it = items.find((i) => i.id === img.dataset.id);
+      if (it && it.photo) openLightbox(it.photo);
     });
   });
 
@@ -259,17 +276,44 @@ function renderList(category) {
 }
 
 function rowHtml(it) {
+  const doneBadge = it.done
+    ? `<span class="badge badge-done">เสร็จแล้ว</span>`
+    : `<span class="badge badge-muted">ยังไม่เสร็จ</span>`;
+
+  const linkBtn = it.link
+    ? `<button type="button" class="btn btn-link card-link-btn" data-action="open-link" data-id="${it.id}">🔗 เปิดลิงก์</button>`
+    : `<button type="button" class="btn btn-link card-link-btn disabled" disabled>🔗 เปิดลิงก์</button>`;
+
+  const photoEl = it.photo
+    ? `<img src="${it.photo}" class="card-photo-thumb" data-id="${it.id}" alt="แตะเพื่อดูรูปเต็ม">`
+    : `<span class="card-photo-empty" aria-hidden="true">🖼️</span>`;
+
   return `
     <div class="swipe-row" data-id="${it.id}">
       <div class="swipe-actions">
         <button type="button" class="swipe-action-btn swipe-action-edit" data-action="edit" data-id="${it.id}">แก้ไข</button>
         <button type="button" class="swipe-action-btn swipe-action-delete" data-action="delete" data-id="${it.id}">ลบ</button>
       </div>
-      <div class="swipe-content" data-id="${it.id}" data-open="false">
-        <div class="col col-title"><span class="row-title ${it.done ? "done" : ""}">${escapeHtml(it.title)}</span></div>
-        <div class="col col-date">${it.start_date || "—"}</div>
-        <div class="col col-date">${it.due_date || "—"}</div>
-        <div class="col col-done"><input type="checkbox" class="row-done-check" data-id="${it.id}" ${it.done ? "checked" : ""}></div>
+      <div class="swipe-content item-card" data-id="${it.id}" data-open="false">
+        <div class="card-top">
+          <span class="row-title ${it.done ? "done" : ""}">${escapeHtml(it.title)}</span>
+          <input type="checkbox" class="row-done-check" data-id="${it.id}" ${it.done ? "checked" : ""}>
+        </div>
+        <div class="card-badges">${doneBadge}</div>
+        <div class="card-dates">
+          <div class="card-date-item">
+            <span class="card-date-label">เริ่ม</span>
+            <span>${it.start_date || "—"}</span>
+          </div>
+          <div class="card-date-item">
+            <span class="card-date-label">กำหนดจบ</span>
+            <span>${it.due_date || "—"}</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          ${linkBtn}
+          ${photoEl}
+        </div>
       </div>
     </div>
   `;
@@ -282,6 +326,9 @@ function setupSwipeRows(container, category) {
     let dragX = 0;
     let dragging = false;
     let moved = false;
+
+    const isInteractiveTarget = (target) =>
+      target.closest(".row-done-check, .card-link-btn, .card-photo-thumb, .card-photo-empty");
 
     const closeRow = () => {
       contentEl.style.transition = "transform 0.2s ease";
@@ -298,7 +345,7 @@ function setupSwipeRows(container, category) {
     };
 
     contentEl.addEventListener("pointerdown", (e) => {
-      if (e.target.classList.contains("row-done-check")) return;
+      if (isInteractiveTarget(e.target)) return;
       startX = e.clientX;
       dragging = true;
       moved = false;
@@ -336,14 +383,13 @@ function setupSwipeRows(container, category) {
     contentEl.addEventListener("pointercancel", endDrag);
 
     contentEl.addEventListener("click", (e) => {
-      if (e.target.classList.contains("row-done-check")) return;
+      if (isInteractiveTarget(e.target)) return;
       if (moved) { moved = false; return; }
       if (contentEl.dataset.open === "true") {
         closeRow();
-        return;
       }
-      const it = items.find((i) => i.id === contentEl.dataset.id);
-      openModal(category, it);
+      // else: nothing to do — all info is already shown on the card itself.
+      // Swipe left to reveal Edit/Delete.
     });
   });
 }
