@@ -6,7 +6,7 @@
 <title>To Do · To Learn · To Play</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -72,55 +72,9 @@
   </button>
 </nav>
 
-<!-- ============ MODAL: VIEW (Preview) ============ -->
+<!-- ============ MODAL: EDIT FORM ============ -->
 <div id="modalOverlay" class="modal-overlay hidden">
   <div class="modal">
-
-    <!-- ---------- PREVIEW PANEL (read-only) ---------- -->
-    <div id="viewPanel">
-      <div class="modal-head">
-        <h2 id="viewTitle">ชื่อรายการ</h2>
-        <button id="viewClose" class="icon-btn" aria-label="ปิด">×</button>
-      </div>
-
-      <div class="view-badges">
-        <span id="viewCategoryBadge" class="badge">To Do</span>
-        <span id="viewDoneBadge" class="badge badge-muted">ยังไม่เสร็จ</span>
-      </div>
-
-      <div id="viewNotesRow" class="view-row hidden">
-        <span class="view-label">รายละเอียด</span>
-        <p id="viewNotes" class="view-text"></p>
-      </div>
-
-      <div class="view-row">
-        <span class="view-label">วันเริ่ม</span>
-        <span id="viewStart" class="view-text">—</span>
-      </div>
-
-      <div class="view-row">
-        <span class="view-label">วันกำหนดจบ</span>
-        <span id="viewDue" class="view-text">—</span>
-      </div>
-
-      <div id="viewLinkRow" class="view-row hidden">
-        <span class="view-label">ลิงก์อ้างอิง</span>
-        <button type="button" id="viewLinkBtn" class="btn btn-link">🔗 เปิดลิงก์</button>
-      </div>
-
-      <div id="viewPhotoRow" class="view-row hidden">
-        <span class="view-label">รูปภาพ</span>
-        <img id="viewPhoto" class="photo-preview photo-preview-lg" alt="แตะเพื่อดูรูปเต็ม">
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" id="viewDeleteBtn" class="btn btn-danger">ลบ</button>
-        <div class="modal-actions-right">
-          <button type="button" id="viewCloseBtn2" class="btn btn-ghost">ปิด</button>
-          <button type="button" id="viewEditBtn" class="btn btn-primary">แก้ไข</button>
-        </div>
-      </div>
-    </div>
 
     <!-- ---------- EDIT PANEL (form) ---------- -->
     <div id="editPanel" class="hidden">
