@@ -484,6 +484,7 @@ body {
 .field {
   display: block;
   margin-bottom: 14px;
+  min-width: 0;
 }
 .field span {
   display: block;
@@ -512,8 +513,9 @@ body {
 
 .field-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+  min-width: 0;
 }
 
 .photo-row {
@@ -610,8 +612,9 @@ body {
 .link-row {
   display: flex;
   gap: 8px;
+  min-width: 0;
 }
-.link-row input { flex: 1; }
+.link-row input { flex: 1; min-width: 0; }
 
 .btn-icon-only {
   white-space: nowrap;
