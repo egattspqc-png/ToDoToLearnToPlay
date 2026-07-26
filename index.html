@@ -166,9 +166,11 @@
           <span>รูปภาพ</span>
           <div class="photo-row">
             <img id="f_photo_preview" class="photo-preview hidden" alt="รูปที่บันทึกไว้ แตะเพื่อดูรูปเต็ม">
-            <button type="button" id="photoPickBtn" class="btn btn-ghost">เพิ่ม/ถ่ายรูปใหม่</button>
+            <button type="button" id="photoUploadBtn" class="btn btn-ghost">🖼️ เพิ่มรูป</button>
+            <button type="button" id="photoCameraBtn" class="btn btn-ghost">📷 ถ่ายรูป</button>
           </div>
-          <input type="file" id="f_photo" accept="image/*" capture="environment" class="hidden-file-input">
+          <input type="file" id="f_photo_upload" accept="image/*" class="hidden-file-input">
+          <input type="file" id="f_photo_camera" accept="image/*" capture="environment" class="hidden-file-input">
         </label>
 
         <label class="field-checkbox">
