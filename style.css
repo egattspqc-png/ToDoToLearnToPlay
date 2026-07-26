@@ -249,8 +249,10 @@ body {
 }
 
 .swipe-action-edit { background: var(--todo); }
-#view-learn .swipe-action-edit { background: var(--learn); }
-#view-play .swipe-action-edit { background: var(--play); }
+#view-learn .swipe-action-edit,
+.swipe-action-edit.swipe-action-learn { background: var(--learn); }
+#view-play .swipe-action-edit,
+.swipe-action-edit.swipe-action-play { background: var(--play); }
 
 .swipe-action-delete { background: var(--danger); }
 
@@ -345,8 +347,10 @@ body {
   flex-shrink: 0;
 }
 
-#view-learn .row-done-check { accent-color: var(--learn); }
-#view-play .row-done-check { accent-color: var(--play); }
+#view-learn .row-done-check,
+.row-done-check.row-done-check-learn { accent-color: var(--learn); }
+#view-play .row-done-check,
+.row-done-check.row-done-check-play { accent-color: var(--play); }
 
 /* ---------- FAB ---------- */
 .fab {
