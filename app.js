@@ -179,9 +179,13 @@ document.getElementById("nextMonth").addEventListener("click", () => {
 });
 
 // ---------- List views (To Do / To Learn / To Play) ----------
+const SWIPE_ACTION_WIDTH = 140; // total width of the Edit + Delete buttons revealed on swipe
+let openSwipeId = null; // id of the row currently swiped open (only one at a time)
+
 function renderList(category) {
   const container = document.getElementById(`view-${category}`);
   let list = items.filter((it) => it.category === category);
+  openSwipeId = null;
 
   const { col, dir } = sortState[category];
   list = list.slice().sort((a, b) => {
@@ -201,24 +205,20 @@ function renderList(category) {
   const arrow = (c) => (col === c ? (dir === "asc" ? "▲" : "▼") : "");
 
   container.innerHTML = `
-    <table class="item-table">
-      <thead>
-        <tr>
-          <th data-col="title">ชื่อรายการ <span class="sort-arrow">${arrow("title")}</span></th>
-          <th data-col="start_date">เริ่ม <span class="sort-arrow">${arrow("start_date")}</span></th>
-          <th data-col="due_date">กำหนดจบ <span class="sort-arrow">${arrow("due_date")}</span></th>
-          <th data-col="done" style="text-align:center">เสร็จ <span class="sort-arrow">${arrow("done")}</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${list.map(rowHtml).join("")}
-      </tbody>
-    </table>
+    <div class="list-header">
+      <div class="col col-title" data-col="title">ชื่อรายการ <span class="sort-arrow">${arrow("title")}</span></div>
+      <div class="col col-date" data-col="start_date">เริ่ม <span class="sort-arrow">${arrow("start_date")}</span></div>
+      <div class="col col-date" data-col="due_date">กำหนดจบ <span class="sort-arrow">${arrow("due_date")}</span></div>
+      <div class="col col-done" data-col="done">เสร็จ <span class="sort-arrow">${arrow("done")}</span></div>
+    </div>
+    <div class="list-rows">
+      ${list.map(rowHtml).join("")}
+    </div>
   `;
 
-  container.querySelectorAll("th[data-col]").forEach((th) => {
-    th.addEventListener("click", () => {
-      const c = th.dataset.col;
+  container.querySelectorAll(".list-header [data-col]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const c = el.dataset.col;
       if (sortState[category].col === c) {
         sortState[category].dir = sortState[category].dir === "asc" ? "desc" : "asc";
       } else {
@@ -239,25 +239,113 @@ function renderList(category) {
     });
   });
 
-  container.querySelectorAll("tr[data-id]").forEach((tr) => {
-    tr.addEventListener("click", () => {
-      const it = items.find((i) => i.id === tr.dataset.id);
-      openModal(category, it);
+  container.querySelectorAll('[data-action="edit"]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const it = items.find((i) => i.id === btn.dataset.id);
+      editItemDirectly(category, it);
     });
   });
+
+  container.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("ต้องการลบรายการนี้ใช่ไหม?")) return;
+      await deleteItemApi(btn.dataset.id);
+      await fetchItems();
+      render();
+    });
+  });
+
+  setupSwipeRows(container, category);
 }
 
 function rowHtml(it) {
   return `
-    <tr data-id="${it.id}">
-      <td><span class="row-title ${it.done ? "done" : ""}">${escapeHtml(it.title)}</span></td>
-      <td>${it.start_date || "—"}</td>
-      <td>${it.due_date || "—"}</td>
-      <td style="text-align:center" onclick="event.stopPropagation()">
-        <input type="checkbox" class="row-done-check" data-id="${it.id}" ${it.done ? "checked" : ""}>
-      </td>
-    </tr>
+    <div class="swipe-row" data-id="${it.id}">
+      <div class="swipe-actions">
+        <button type="button" class="swipe-action-btn swipe-action-edit" data-action="edit" data-id="${it.id}">แก้ไข</button>
+        <button type="button" class="swipe-action-btn swipe-action-delete" data-action="delete" data-id="${it.id}">ลบ</button>
+      </div>
+      <div class="swipe-content" data-id="${it.id}" data-open="false">
+        <div class="col col-title"><span class="row-title ${it.done ? "done" : ""}">${escapeHtml(it.title)}</span></div>
+        <div class="col col-date">${it.start_date || "—"}</div>
+        <div class="col col-date">${it.due_date || "—"}</div>
+        <div class="col col-done"><input type="checkbox" class="row-done-check" data-id="${it.id}" ${it.done ? "checked" : ""}></div>
+      </div>
+    </div>
   `;
+}
+
+// Swipe-to-reveal Edit/Delete, using Pointer Events (works for touch and mouse).
+function setupSwipeRows(container, category) {
+  container.querySelectorAll(".swipe-content").forEach((contentEl) => {
+    let startX = 0;
+    let dragX = 0;
+    let dragging = false;
+    let moved = false;
+
+    const closeRow = () => {
+      contentEl.style.transition = "transform 0.2s ease";
+      contentEl.style.transform = "translateX(0)";
+      contentEl.dataset.open = "false";
+      if (openSwipeId === contentEl.dataset.id) openSwipeId = null;
+    };
+
+    const openRow = () => {
+      contentEl.style.transition = "transform 0.2s ease";
+      contentEl.style.transform = `translateX(-${SWIPE_ACTION_WIDTH}px)`;
+      contentEl.dataset.open = "true";
+      openSwipeId = contentEl.dataset.id;
+    };
+
+    contentEl.addEventListener("pointerdown", (e) => {
+      if (e.target.classList.contains("row-done-check")) return;
+      startX = e.clientX;
+      dragging = true;
+      moved = false;
+      contentEl.style.transition = "none";
+      if (openSwipeId && openSwipeId !== contentEl.dataset.id) {
+        const otherEl = container.querySelector(`.swipe-content[data-id="${openSwipeId}"]`);
+        if (otherEl) {
+          otherEl.style.transition = "transform 0.2s ease";
+          otherEl.style.transform = "translateX(0)";
+          otherEl.dataset.open = "false";
+        }
+        openSwipeId = null;
+      }
+    });
+
+    contentEl.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 5) moved = true;
+      const base = contentEl.dataset.open === "true" ? -SWIPE_ACTION_WIDTH : 0;
+      dragX = Math.max(-SWIPE_ACTION_WIDTH, Math.min(0, base + dx));
+      contentEl.style.transform = `translateX(${dragX}px)`;
+    });
+
+    const endDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      if (dragX < -SWIPE_ACTION_WIDTH / 2) {
+        openRow();
+      } else {
+        closeRow();
+      }
+    };
+    contentEl.addEventListener("pointerup", endDrag);
+    contentEl.addEventListener("pointercancel", endDrag);
+
+    contentEl.addEventListener("click", (e) => {
+      if (e.target.classList.contains("row-done-check")) return;
+      if (moved) { moved = false; return; }
+      if (contentEl.dataset.open === "true") {
+        closeRow();
+        return;
+      }
+      const it = items.find((i) => i.id === contentEl.dataset.id);
+      openModal(category, it);
+    });
+  });
 }
 
 function escapeHtml(str) {
@@ -375,6 +463,14 @@ function showEditPanel(category, item) {
   }
 
   document.getElementById("deleteBtn").classList.toggle("hidden", !item);
+}
+
+// Opens the modal straight into edit mode for an existing item
+// (used by the swipe "แก้ไข" action, skipping the preview step).
+function editItemDirectly(category, item) {
+  activeItem = item;
+  showEditPanel(category, item);
+  modalOverlay.classList.remove("hidden");
 }
 
 function closeModal() {
