@@ -513,7 +513,8 @@ function showEditPanel(category, item) {
   document.getElementById("f_due").value = item ? item.due_date || "" : "";
   document.getElementById("f_link").value = item ? item.link : "";
   document.getElementById("f_done").checked = item ? !!item.done : false;
-  document.getElementById("f_photo").value = "";
+  document.getElementById("f_photo_upload").value = "";
+  document.getElementById("f_photo_camera").value = "";
 
   currentPhotoDataUrl = item ? item.photo || "" : "";
   const preview = document.getElementById("f_photo_preview");
@@ -571,9 +572,14 @@ document.getElementById("f_photo_preview").addEventListener("click", () => {
   if (currentPhotoDataUrl) openLightbox(currentPhotoDataUrl);
 });
 
-// Only the dedicated button opens the camera / file picker.
-document.getElementById("photoPickBtn").addEventListener("click", () => {
-  document.getElementById("f_photo").click();
+// "เพิ่มรูป" opens the photo library / file picker (no camera attribute).
+document.getElementById("photoUploadBtn").addEventListener("click", () => {
+  document.getElementById("f_photo_upload").click();
+});
+
+// "ถ่ายรูป" opens the camera directly.
+document.getElementById("photoCameraBtn").addEventListener("click", () => {
+  document.getElementById("f_photo_camera").click();
 });
 
 // ---------- QR code scanner ----------
@@ -632,8 +638,8 @@ function scanQrFrame() {
 document.getElementById("qrScanBtn").addEventListener("click", startQrScanner);
 document.getElementById("qrCloseBtn").addEventListener("click", stopQrScanner);
 
-// Compress photo to keep D1 rows small
-document.getElementById("f_photo").addEventListener("change", (e) => {
+// Compress photo to keep D1 rows small (shared by both the upload and camera inputs)
+function handlePhotoFile(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -655,7 +661,10 @@ document.getElementById("f_photo").addEventListener("change", (e) => {
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
-});
+}
+
+document.getElementById("f_photo_upload").addEventListener("change", handlePhotoFile);
+document.getElementById("f_photo_camera").addEventListener("change", handlePhotoFile);
 
 itemForm.addEventListener("submit", async (e) => {
   e.preventDefault();
