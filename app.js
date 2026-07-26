@@ -139,34 +139,39 @@ function renderCalendar() {
       cell.appendChild(dotsWrap);
     }
 
-    cell.addEventListener("click", () => showDayPanel(dateStr, dayItems));
+    cell.addEventListener("click", () => showDayPanel(dateStr));
     grid.appendChild(cell);
   }
 }
 
-function showDayPanel(dateStr, dayItems) {
-  const panel = document.getElementById("dayPanel");
-  const list = document.getElementById("dayPanelList");
+let currentDayPanelDate = null;
+
+function showDayPanel(dateStr) {
+  currentDayPanelDate = dateStr;
   document.getElementById("dayPanelDate").textContent = dateStr;
-  list.innerHTML = "";
+  renderDayPanelList(dateStr);
+  document.getElementById("dayPanel").classList.remove("hidden");
+}
+
+function renderDayPanelList(dateStr) {
+  const container = document.getElementById("dayPanelList");
+  const dayItems = itemsOnDate(dateStr);
 
   if (!dayItems.length) {
-    list.innerHTML = `<li style="color:var(--muted)">ไม่มีรายการในวันนี้</li>`;
-  } else {
-    dayItems.forEach((it) => {
-      const li = document.createElement("li");
-      const dot = `<span class="dot dot-${it.category}"></span>`;
-      li.innerHTML = `${dot} <span>${escapeHtml(it.title)}</span> <span style="margin-left:auto;color:var(--muted);font-size:12px">${CATEGORY_LABEL[it.category]}</span>`;
-      li.style.cursor = "pointer";
-      li.addEventListener("click", () => openModal(it.category, it));
-      list.appendChild(li);
-    });
+    container.innerHTML = `<div class="list-empty" style="padding:24px 0;">ไม่มีรายการในวันนี้</div>`;
+    return;
   }
-  panel.classList.remove("hidden");
+
+  container.innerHTML = dayItems.map(rowHtml).join("");
+  wireItemCards(container, () => {
+    renderCalendar();
+    renderDayPanelList(dateStr);
+  });
 }
 
 document.getElementById("closeDayPanel").addEventListener("click", () => {
   document.getElementById("dayPanel").classList.add("hidden");
+  currentDayPanelDate = null;
 });
 
 document.getElementById("prevMonth").addEventListener("click", () => {
@@ -230,13 +235,68 @@ function renderList(category) {
     });
   });
 
+  wireItemCards(container, () => renderList(category));
+}
+
+function rowHtml(it) {
+  const doneBadge = it.done
+    ? `<span class="badge badge-done">เสร็จแล้ว</span>`
+    : `<span class="badge badge-muted">ยังไม่เสร็จ</span>`;
+
+  const linkBtn = it.link
+    ? `<button type="button" class="btn btn-link card-link-btn" data-action="open-link" data-id="${it.id}">🔗 เปิดลิงก์</button>`
+    : `<button type="button" class="btn btn-link card-link-btn disabled" disabled>🔗 เปิดลิงก์</button>`;
+
+  const photoEl = it.photo
+    ? `<img src="${it.photo}" class="card-photo-thumb" data-id="${it.id}" alt="แตะเพื่อดูรูปเต็ม">`
+    : `<span class="card-photo-empty" aria-hidden="true">🖼️</span>`;
+
+  return `
+    <div class="swipe-row" data-id="${it.id}">
+      <div class="swipe-actions">
+        <button type="button" class="swipe-action-btn swipe-action-edit swipe-action-${it.category}" data-action="edit" data-id="${it.id}">แก้ไข</button>
+        <button type="button" class="swipe-action-btn swipe-action-delete" data-action="delete" data-id="${it.id}">ลบ</button>
+      </div>
+      <div class="swipe-content item-card" data-id="${it.id}" data-open="false">
+        <div class="card-top">
+          <span class="row-title ${it.done ? "done" : ""}">${escapeHtml(it.title)}</span>
+          <input type="checkbox" class="row-done-check row-done-check-${it.category}" data-id="${it.id}" ${it.done ? "checked" : ""}>
+        </div>
+        <div class="card-badges">
+          <span class="badge badge-${it.category}">${CATEGORY_LABEL[it.category]}</span>
+          ${doneBadge}
+        </div>
+        <div class="card-dates">
+          <div class="card-date-item">
+            <span class="card-date-label">เริ่ม</span>
+            <span>${it.start_date || "—"}</span>
+          </div>
+          <div class="card-date-item">
+            <span class="card-date-label">กำหนดจบ</span>
+            <span>${it.due_date || "—"}</span>
+          </div>
+        </div>
+        <div class="card-bottom">
+          ${linkBtn}
+          ${photoEl}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Wires the checkbox / open-link / photo-lightbox / edit / delete actions and the
+// swipe gesture for a container of item cards. Works for both the fixed-category
+// List views and the calendar's mixed-category day panel (each item carries its
+// own .category, so no outer "current category" needs to be passed in).
+function wireItemCards(container, refreshFn) {
   container.querySelectorAll(".row-done-check").forEach((chk) => {
     chk.addEventListener("click", async (e) => {
       e.stopPropagation();
       const it = items.find((i) => i.id === chk.dataset.id);
       it.done = chk.checked ? 1 : 0;
       await updateItem(it.id, toPayload(it));
-      renderList(category);
+      refreshFn();
     });
   });
 
@@ -259,7 +319,7 @@ function renderList(category) {
   container.querySelectorAll('[data-action="edit"]').forEach((btn) => {
     btn.addEventListener("click", () => {
       const it = items.find((i) => i.id === btn.dataset.id);
-      editItemDirectly(category, it);
+      editItemDirectly(it.category, it);
     });
   });
 
@@ -268,59 +328,15 @@ function renderList(category) {
       if (!confirm("ต้องการลบรายการนี้ใช่ไหม?")) return;
       await deleteItemApi(btn.dataset.id);
       await fetchItems();
-      render();
+      refreshFn();
     });
   });
 
-  setupSwipeRows(container, category);
-}
-
-function rowHtml(it) {
-  const doneBadge = it.done
-    ? `<span class="badge badge-done">เสร็จแล้ว</span>`
-    : `<span class="badge badge-muted">ยังไม่เสร็จ</span>`;
-
-  const linkBtn = it.link
-    ? `<button type="button" class="btn btn-link card-link-btn" data-action="open-link" data-id="${it.id}">🔗 เปิดลิงก์</button>`
-    : `<button type="button" class="btn btn-link card-link-btn disabled" disabled>🔗 เปิดลิงก์</button>`;
-
-  const photoEl = it.photo
-    ? `<img src="${it.photo}" class="card-photo-thumb" data-id="${it.id}" alt="แตะเพื่อดูรูปเต็ม">`
-    : `<span class="card-photo-empty" aria-hidden="true">🖼️</span>`;
-
-  return `
-    <div class="swipe-row" data-id="${it.id}">
-      <div class="swipe-actions">
-        <button type="button" class="swipe-action-btn swipe-action-edit" data-action="edit" data-id="${it.id}">แก้ไข</button>
-        <button type="button" class="swipe-action-btn swipe-action-delete" data-action="delete" data-id="${it.id}">ลบ</button>
-      </div>
-      <div class="swipe-content item-card" data-id="${it.id}" data-open="false">
-        <div class="card-top">
-          <span class="row-title ${it.done ? "done" : ""}">${escapeHtml(it.title)}</span>
-          <input type="checkbox" class="row-done-check" data-id="${it.id}" ${it.done ? "checked" : ""}>
-        </div>
-        <div class="card-badges">${doneBadge}</div>
-        <div class="card-dates">
-          <div class="card-date-item">
-            <span class="card-date-label">เริ่ม</span>
-            <span>${it.start_date || "—"}</span>
-          </div>
-          <div class="card-date-item">
-            <span class="card-date-label">กำหนดจบ</span>
-            <span>${it.due_date || "—"}</span>
-          </div>
-        </div>
-        <div class="card-bottom">
-          ${linkBtn}
-          ${photoEl}
-        </div>
-      </div>
-    </div>
-  `;
+  setupSwipeRows(container);
 }
 
 // Swipe-to-reveal Edit/Delete, using Pointer Events (works for touch and mouse).
-function setupSwipeRows(container, category) {
+function setupSwipeRows(container) {
   container.querySelectorAll(".swipe-content").forEach((contentEl) => {
     let startX = 0;
     let dragX = 0;
@@ -664,6 +680,7 @@ itemForm.addEventListener("submit", async (e) => {
   closeModal();
   await fetchItems();
   render();
+  if (currentDayPanelDate) renderDayPanelList(currentDayPanelDate);
 });
 
 document.getElementById("deleteBtn").addEventListener("click", async () => {
@@ -674,6 +691,7 @@ document.getElementById("deleteBtn").addEventListener("click", async () => {
   closeModal();
   await fetchItems();
   render();
+  if (currentDayPanelDate) renderDayPanelList(currentDayPanelDate);
 });
 
 // ---------- Init ----------
