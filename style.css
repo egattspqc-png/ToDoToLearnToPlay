@@ -496,10 +496,21 @@ body {
 
 .field input[type="text"],
 .field input[type="url"],
-.field input[type="date"],
 .field input[type="file"],
 .field textarea {
   width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.field input[type="date"] {
+  width: 100%;
+  max-width: 220px;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
