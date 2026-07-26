@@ -31,6 +31,8 @@ html, body {
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -213,7 +215,13 @@ body {
 
 .sort-arrow { font-size: 9px; margin-left: 2px; opacity: 0.85; }
 
-.row-title { font-weight: 700; font-size: 15px; }
+.row-title {
+  font-weight: 700;
+  font-size: 15px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .row-title.done { text-decoration: line-through; color: var(--muted); font-weight: 500; }
 
 .list-rows {
@@ -229,6 +237,7 @@ body {
   background: var(--danger);
   border-radius: var(--radius);
   box-shadow: 0 1px 3px rgba(23,27,35,0.08);
+  min-width: 0;
 }
 
 .swipe-actions {
@@ -270,6 +279,7 @@ body {
   flex-direction: column;
   gap: 10px;
   padding: 14px;
+  min-width: 0;
 }
 
 .card-top {
@@ -277,13 +287,16 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 
-.card-badges { display: flex; gap: 6px; }
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
 
 .card-dates {
   display: flex;
   gap: 20px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .card-date-item {
@@ -292,6 +305,7 @@ body {
   gap: 2px;
   font-size: 13px;
   color: var(--ink);
+  min-width: 0;
 }
 
 .card-date-label {
@@ -305,11 +319,15 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 
 .card-link-btn {
   padding: 8px 14px;
   font-size: 13px;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .card-link-btn.disabled {
   background: var(--bg);
