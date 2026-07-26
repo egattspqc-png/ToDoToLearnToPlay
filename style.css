@@ -545,13 +545,6 @@ body {
 }
 .photo-preview.hidden { display: none; }
 
-.photo-preview-lg {
-  width: 100%;
-  height: auto;
-  max-height: 220px;
-  object-fit: cover;
-}
-
 .hidden-file-input { display: none; }
 
 .lightbox {
@@ -571,13 +564,6 @@ body {
   border-radius: 8px;
 }
 
-/* ---------- Preview panel ---------- */
-.view-badges {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
 .badge {
   display: inline-block;
   padding: 4px 12px;
@@ -592,25 +578,6 @@ body {
 
 .badge.badge-muted { background: var(--bg); color: var(--muted); }
 .badge.badge-done { background: var(--play-soft); color: var(--play); }
-
-.view-row {
-  margin-bottom: 14px;
-}
-.view-row.hidden { display: none; }
-
-.view-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 4px;
-}
-
-.view-text {
-  font-size: 14px;
-  color: var(--ink);
-  white-space: pre-wrap;
-}
 
 .btn-link {
   background: var(--bg);
