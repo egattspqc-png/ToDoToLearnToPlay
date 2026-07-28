@@ -464,11 +464,14 @@ function showEditPanel(category, item) {
 
   currentPhotoDataUrl = item ? item.photo || "" : "";
   const preview = document.getElementById("f_photo_preview");
+  const removeBtn = document.getElementById("photoRemoveBtn");
   if (currentPhotoDataUrl) {
     preview.src = currentPhotoDataUrl;
     preview.classList.remove("hidden");
+    removeBtn.classList.remove("hidden");
   } else {
     preview.classList.add("hidden");
+    removeBtn.classList.add("hidden");
   }
 
   document.getElementById("deleteBtn").classList.toggle("hidden", !item);
@@ -592,6 +595,7 @@ function handlePhotoFile(e) {
       const preview = document.getElementById("f_photo_preview");
       preview.src = currentPhotoDataUrl;
       preview.classList.remove("hidden");
+      document.getElementById("photoRemoveBtn").classList.remove("hidden");
     };
     img.src = ev.target.result;
   };
@@ -600,6 +604,14 @@ function handlePhotoFile(e) {
 
 document.getElementById("f_photo_upload").addEventListener("change", handlePhotoFile);
 document.getElementById("f_photo_camera").addEventListener("change", handlePhotoFile);
+
+document.getElementById("photoRemoveBtn").addEventListener("click", () => {
+  currentPhotoDataUrl = "";
+  document.getElementById("f_photo_upload").value = "";
+  document.getElementById("f_photo_camera").value = "";
+  document.getElementById("f_photo_preview").classList.add("hidden");
+  document.getElementById("photoRemoveBtn").classList.add("hidden");
+});
 
 itemForm.addEventListener("submit", async (e) => {
   e.preventDefault();
